@@ -5,6 +5,7 @@ import asyncio
 import time
 import re
 from dotenv import load_dotenv
+from aiohttp import web
 
 # Load variables from .env file into environment variables
 load_dotenv()
@@ -75,6 +76,16 @@ def get_current_active_challenge(user_id: int) -> int:
             return c
     return 10
 
+async def start_web_server():
+    """Binds an HTTP port so Render's Web Service healthcheck passes."""
+    app = web.Application()
+    app.router.add_get('/', lambda r: web.Response(text="alive"))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 8080))
+    await web.TCPSite(runner, '0.0.0.0', port).start()
+    print(f"Web server bound on port {port}")
+
 async def mark_complete(user: discord.User, challenge_num: int, channel: discord.TextChannel = None):
     user_id = user.id
     
@@ -120,6 +131,7 @@ async def mark_complete(user: discord.User, challenge_num: int, channel: discord
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user.name} - GL Birthday Bot Active!")
+    bot.loop.create_task(start_web_server())
 
 # --- START COMMAND ---
 
