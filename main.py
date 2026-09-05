@@ -5,7 +5,9 @@ import time
 import re
 
 # --- BOT CONFIGURATION ---
-TOKEN = "MTUzODU5NDM0MTYyMTIwMjk1NA.GTLCBb.rbre0PsQzNYpx3YtydWtuClBnsW7IYUCu-Bhs0" 
+# Loads token safely from environment variables
+TOKEN = os.environ.get("DISCORD_TOKEN", "YOUR_BOT_TOKEN_HERE") 
+
 EVENT_CHANNEL_ID = 1545528729176899585   # Channel ID for public challenge updates
 TIME_CAPSULE_CHANNEL_ID = 1544739462611996682 # Channel ID where the target message exists
 
