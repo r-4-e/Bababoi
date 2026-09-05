@@ -56,7 +56,7 @@ CHALLENGE_HINTS = {
     6: "**Challenge 6: Secret Word Guessing**\n└ *Objective: Guess the secret 7-letter word directly in chat.*",
     7: "**Challenge 7: Time Capsule**\n└ *Objective: React with 🎂/🍰 to the target message, then run `!submitid 1545464668741701702`.*",
     8: "**Challenge 8: Base64 Passkey**\n└ *Objective: Find the Base64 post, decode it, and run `!submitcode <passkey>`.*",
-    9: "**Challenge 9: Hex + ROT47 Cipher**\n└ *Objective: Find the Hex post, decode Hex -> ROT47, and run `!submitcode <passkey>`.*"
+    9: "**Challenge 9: Hex + ROT47 Cipher**\n└ *Objective: Find the Hex post, decode Hex -> ROT47, and run `!submitcode <passkey>` Magnitite have a tuff server tho.*"
 }
 
 def is_chat_scannable():
