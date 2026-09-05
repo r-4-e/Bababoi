@@ -126,7 +126,14 @@ async def mark_complete(user: discord.User, challenge_num: int, channel: discord
             
         await user.send(embed=dm_embed)
     except discord.Forbidden:
-        pass
+        print(f"[DM FAILED] Could not DM {user} ({user.id}) - they likely have server DMs disabled.")
+        if channel:
+            try:
+                await channel.send(f"⚠️ {user.mention} I couldn't DM you your results — please enable **Direct Messages from server members** in your Privacy Settings for this server, then run `!progress` to see where you're at.", delete_after=15)
+            except Exception:
+                pass
+    except Exception as e:
+        print(f"[DM ERROR] Unexpected error DMing {user} ({user.id}): {e}")
 
 @bot.event
 async def on_ready():
@@ -155,6 +162,7 @@ async def start_event(ctx):
             await ctx.author.send(embed=embed)
             await ctx.send(f"✅ {ctx.author.mention}, your event journey has started! Check your DMs for **Challenge 1**.")
         except discord.Forbidden:
+            print(f"[DM FAILED] Could not DM {ctx.author} ({ctx.author.id}) on !start - they likely have server DMs disabled.")
             await ctx.send(f"⚠️ {ctx.author.mention}, I couldn't send you a DM. Please enable direct messages from server members!")
     else:
         active = get_current_active_challenge(user_id)
