@@ -367,4 +367,50 @@ async def check_progress(ctx):
     else:
         await ctx.send(f"👑 {ctx.author.mention} has cleared all **9/9** challenges!")
 
+@bot.command(name="promote")
+async def promote_user(ctx, member: discord.Member, amount: int = 1):
+    """Admin-only: force-advance a member past their current challenge(s) without requiring completion."""
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("❌ You don't have permission to use this command.")
+        return
+
+    if amount < 1:
+        await ctx.send("❌ Amount must be at least 1.")
+        return
+
+    user_id = member.id
+    if user_id not in user_progress:
+        user_progress[user_id] = set()
+
+    for _ in range(amount):
+        current_active = get_current_active_challenge(user_id)
+        if current_active > 9:
+            break
+        user_progress[user_id].add(current_active)
+
+    new_active = get_current_active_challenge(user_id)
+    completed_count = min(len(user_progress[user_id]), 9)
+    await ctx.send(f"✅ {member.mention} has been promoted by an admin! (**{completed_count}/9** cleared)")
+
+    try:
+        if new_active <= 9:
+            embed = discord.Embed(
+                title="⬆️ You've Been Promoted!",
+                description=f"An admin advanced you ahead. You're now on **Challenge {new_active}**.",
+                color=0x2b2d31
+            )
+            embed.add_field(name="📊 Your Total Progress", value=f"**{completed_count}/9** Challenges Cleared", inline=False)
+            embed.add_field(name=f"🔓 Challenge {new_active}", value=CHALLENGE_HINTS[new_active], inline=False)
+            await member.send(embed=embed)
+        else:
+            user_progress[user_id].add(10)
+            embed = discord.Embed(
+                title="👑 GRAND COMPLETIONIST!",
+                description="An admin promoted you through the remaining challenges. You've cleared them all!",
+                color=0x2b2d31
+            )
+            await member.send(embed=embed)
+    except discord.Forbidden:
+        print(f"[DM FAILED] Could not DM {member} ({member.id}) after promotion - they likely have server DMs disabled.")
+
 bot.run(TOKEN)
