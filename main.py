@@ -413,4 +413,38 @@ async def promote_user(ctx, member: discord.Member, amount: int = 1):
     except discord.Forbidden:
         print(f"[DM FAILED] Could not DM {member} ({member.id}) after promotion - they likely have server DMs disabled.")
 
+@bot.command(name="demote")
+async def demote_user(ctx, member: discord.Member, target_challenge: int = 1):
+    """Admin-only: roll a member's progress back so their active challenge becomes target_challenge (1-9)."""
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("❌ You don't have permission to use this command.")
+        return
+
+    if not 1 <= target_challenge <= 9:
+        await ctx.send("❌ target_challenge must be between 1 and 9.")
+        return
+
+    user_id = member.id
+    if user_id not in user_progress:
+        await ctx.send(f"❌ {member.mention} hasn't started the event yet.")
+        return
+
+    # Keep only completions strictly before target_challenge, drop everything else (including the '10' completionist flag)
+    user_progress[user_id] = {c for c in user_progress[user_id] if c < target_challenge}
+
+    completed_count = len(user_progress[user_id])
+    await ctx.send(f"⬇️ {member.mention} has been demoted by an admin. They are now active on **Challenge {target_challenge}** (**{completed_count}/9** cleared).")
+
+    try:
+        embed = discord.Embed(
+            title="⬇️ Your Progress Was Adjusted",
+            description=f"An admin has set you back to **Challenge {target_challenge}**.",
+            color=0x2b2d31
+        )
+        embed.add_field(name="📊 Your Total Progress", value=f"**{completed_count}/9** Challenges Cleared", inline=False)
+        embed.add_field(name=f"🔓 Challenge {target_challenge}", value=CHALLENGE_HINTS[target_challenge], inline=False)
+        await member.send(embed=embed)
+    except discord.Forbidden:
+        print(f"[DM FAILED] Could not DM {member} ({member.id}) after demotion - they likely have server DMs disabled.")
+
 bot.run(TOKEN)
