@@ -13,18 +13,6 @@ load_dotenv()
 TOKEN = os.environ.get("DISCORD_TOKEN") 
 EVENT_CHANNEL_ID = 1545528729176899585   # Channel ID for public challenge updates
 TIME_CAPSULE_CHANNEL_ID = 1544739462611996682 # Channel ID where the target message exists
-
-import discord
-from discord.ext import commands
-import asyncio
-import time
-import re
-
-# --- BOT CONFIGURATION ---
-TOKEN = "YOUR_DISCORD_BOT_TOKEN_HERE" 
-EVENT_CHANNEL_ID = 123456789012345678      # Channel ID for public challenge updates
-TIME_CAPSULE_CHANNEL_ID = 123456789012345678 # Channel ID where the target message exists
-
 # --- HARD-CODED EVENT SECRETS ---
 SECRET_NUMBER = 73942
 SECRET_WORD = "KINETIC"
