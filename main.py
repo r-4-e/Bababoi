@@ -35,7 +35,6 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 user_progress = {}
 number_guesses = {}  
 word_guesses = {}    
-reaction_posts = {} 
 
 user_last_guess_time = {}
 MESSAGE_TIMESTAMPS = []
@@ -43,14 +42,14 @@ MESSAGE_TIMESTAMPS = []
 # Directory of Challenges & Hints for Sequential DM Delivery
 CHALLENGE_HINTS = {
     1: "**Challenge 1: Voice Connector**\n└ *Objective: Join any public voice channel in the server.*",
-    2: "**Challenge 2: Secret Number Guessing**\n└ *Objective: Guess the secret number (1-100,000) directly in chat.*",
-    3: "**Challenge 3: Server Archaeologist**\n└ *Objective: Search channel topics/pins for a hidden code and type it in chat.*",
-    4: "**Challenge 4: GL Lore Quiz**\n└ *Objective: Type `!quiz` in the event channel and answer all 5 questions.*",
-    5: "**Challenge 5: Mass Reaction Rush**\n└ *Objective: Post a message and get 5 unique members to react to it.*",
-    6: "**Challenge 6: Secret Word Guessing**\n└ *Objective: Guess the secret 7-letter word directly in chat.*",
-    7: "**Challenge 7: Time Capsule**\n└ *Objective: React with 🎂/🍰 to the target message, then run `!submitid 1545464668741701702`.*",
-    8: "**Challenge 8: Base64 Passkey**\n└ *Objective: Find the Base64 post, decode it, and run `!submitcode <passkey>`.*",
-    9: "**Challenge 9: Hex + ROT47 Cipher**\n└ *Objective: Find the Hex post, decode Hex -> ROT47, and run `!submitcode <passkey>` Magnitite have a tuff server tho.*"
+    2: "**Challenge 2: Server Archaeologist**\n└ *Objective: Search channel topics/pins for a hidden code and type it in chat.*",
+    3: "**Challenge 3: GL Lore Quiz**\n└ *Objective: Type `!quiz` in the event channel and answer all 5 questions.*",
+    4: "**Challenge 4: Math Rush**\n└ *Objective: Type `!math` and solve x² = x within 10 seconds.*",
+    5: "**Challenge 5: Secret Word Guessing**\n└ *Objective: Guess the secret 7-letter word directly in chat.*",
+    6: "**Challenge 6: Time Capsule**\n└ *Objective: Find the message in the server that already has a 🎂/🍰 reaction on it, react to it too, then run `!submitid <message_id>` with that message's ID.*",
+    7: "**Challenge 7: Base64 Passkey**\n└ *Objective: Find the Base64 post, decode it, and run `!submitcode <passkey>`.*",
+    8: "**Challenge 8: Hex + ROT47 Cipher**\n└ *Objective: Find the Hex post, decode Hex -> ROT47, and run `!submitcode <passkey>` Magnitite have a tuff server tho.*",
+    9: "**Challenge 9: Secret Number Guessing**\n└ *Objective: Guess the secret number (1-100,000) directly in chat.*"
 }
 
 def is_chat_scannable():
@@ -194,9 +193,6 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    # Track message for Challenge 5 (Mass Reaction Rush)
-    reaction_posts[message.id] = set()
-
     uid = message.author.id
     content = message.content.strip()
 
@@ -213,15 +209,15 @@ async def on_message(message):
 
     now = time.time()
 
-    # Challenge 3: Raw "ASKARA" guess anywhere in chat
-    if active_challenge == 3 and content.upper() == ARCHAEOLOGIST_CODE:
-        await mark_complete(message.author, 3, message.channel)
+    # Challenge 2: Raw "ASKARA" guess anywhere in chat
+    if active_challenge == 2 and content.upper() == ARCHAEOLOGIST_CODE:
+        await mark_complete(message.author, 2, message.channel)
         return
 
     last_guess = user_last_guess_time.get(uid, 0)
     
-    # Challenge 2: RAW NUMBER GUESS (1 - 100000)
-    if active_challenge == 2 and content.isdigit():
+    # Challenge 9: RAW NUMBER GUESS (1 - 100000)
+    if active_challenge == 9 and content.isdigit():
         num = int(content)
         if 1 <= num <= 100000:
             if now - last_guess < 6:
@@ -231,15 +227,15 @@ async def on_message(message):
             number_guesses[uid] = number_guesses.get(uid, 0) + 1
 
             if number_guesses[uid] > 20:
-                await message.channel.send(f"❌ <@{uid}> You have used all 20 attempts for Challenge 2!", delete_after=5)
+                await message.channel.send(f"❌ <@{uid}> You have used all 20 attempts for Challenge 9!", delete_after=5)
             elif num == SECRET_NUMBER:
-                await mark_complete(message.author, 2, message.channel)
+                await mark_complete(message.author, 9, message.channel)
             else:
                 attempts_left = 20 - number_guesses[uid]
                 await message.channel.send(f"❌ Incorrect number guess for <@{uid}>! ({attempts_left} attempts left)", delete_after=5)
 
-    # Challenge 6: RAW WORD GUESS (7 Letters)
-    elif active_challenge == 6 and re.match(r"^[a-zA-Z]+$", content) and len(content) == len(SECRET_WORD):
+    # Challenge 5: RAW WORD GUESS (7 Letters)
+    elif active_challenge == 5 and re.match(r"^[a-zA-Z]+$", content) and len(content) == len(SECRET_WORD):
         if now - last_guess < 6:
             return
 
@@ -247,38 +243,21 @@ async def on_message(message):
         word_guesses[uid] = word_guesses.get(uid, 0) + 1
 
         if word_guesses[uid] > 20:
-            await message.channel.send(f"❌ <@{uid}> You have used all 20 attempts for Challenge 6!", delete_after=5)
+            await message.channel.send(f"❌ <@{uid}> You have used all 20 attempts for Challenge 5!", delete_after=5)
         elif content.upper() == SECRET_WORD:
-            await mark_complete(message.author, 6, message.channel)
+            await mark_complete(message.author, 5, message.channel)
         else:
             attempts_left = 20 - word_guesses[uid]
             await message.channel.send(f"❌ Incorrect word guess for <@{uid}>! ({attempts_left} attempts left)", delete_after=5)
-
-# --- REACTION TRACKER ---
-
-@bot.event
-async def on_reaction_add(reaction, user):
-    if user.bot:
-        return
-
-    msg_id = reaction.message.id
-    if msg_id in reaction_posts:
-        reaction_posts[msg_id].add(user.id)
-        if len(reaction_posts[msg_id]) >= 5:
-            author_id = reaction.message.author.id
-            if get_current_active_challenge(author_id) == 5:
-                author = reaction.message.guild.get_member(author_id)
-                if author:
-                    await mark_complete(author, 5, reaction.message.channel)
 
 # --- COMMANDS ---
 
 @bot.command(name="submitid")
 @commands.cooldown(1, 10, commands.BucketType.user)
 async def submit_id(ctx, message_id: int):
-    """Challenge 7: Validates exact target message ID and checks for cake emoji reaction."""
-    if get_current_active_challenge(ctx.author.id) != 7:
-        await ctx.send("❌ Challenge 7 is not active for you yet!")
+    """Challenge 6: Validates exact target message ID and checks for cake emoji reaction."""
+    if get_current_active_challenge(ctx.author.id) != 6:
+        await ctx.send("❌ Challenge 6 is not active for you yet!")
         return
 
     if message_id != TARGET_MESSAGE_ID:
@@ -304,15 +283,15 @@ async def submit_id(ctx, message_id: int):
                 break
 
     if reacted:
-        await mark_complete(ctx.author, 7, ctx.channel)
+        await mark_complete(ctx.author, 6, ctx.channel)
     else:
         await ctx.send("❌ You submitted the correct message ID, but you haven't reacted to that message with 🎂 or 🍰 yet!")
 
 @bot.command(name="quiz")
 @commands.cooldown(1, 300, commands.BucketType.user)
 async def server_quiz(ctx):
-    if get_current_active_challenge(ctx.author.id) != 4:
-        await ctx.send("❌ Challenge 4 is not active for you yet!")
+    if get_current_active_challenge(ctx.author.id) != 3:
+        await ctx.send("❌ Challenge 3 is not active for you yet!")
         return
 
     questions = [
@@ -338,7 +317,26 @@ async def server_quiz(ctx):
         except asyncio.TimeoutError:
             return await ctx.send("⏰ Time ran out! Quiz failed.")
 
-    await mark_complete(ctx.author, 4, ctx.channel)
+    await mark_complete(ctx.author, 3, ctx.channel)
+
+@bot.command(name="math")
+@commands.cooldown(1, 15, commands.BucketType.user)
+async def math_challenge(ctx):
+    if get_current_active_challenge(ctx.author.id) != 4:
+        await ctx.send("❌ Challenge 4 is not active for you yet!")
+        return
+
+    await ctx.send(f"🧮 {ctx.author.mention} **x² = x** — Find x! You have **10 seconds**.")
+
+    try:
+        msg = await bot.wait_for(
+            'message',
+            check=lambda m: m.author == ctx.author and m.channel == ctx.channel and m.content.strip() in ["0", "1"],
+            timeout=10.0
+        )
+        await mark_complete(ctx.author, 4, ctx.channel)
+    except asyncio.TimeoutError:
+        await ctx.send(f"⏰ {ctx.author.mention} Time's up! Run `!math` to try again.")
 
 @bot.command(name="submitcode")
 @commands.cooldown(1, 6, commands.BucketType.user)
@@ -346,10 +344,10 @@ async def submit_code(ctx, *, code: str):
     active = get_current_active_challenge(ctx.author.id)
     cleaned = code.strip()
 
-    if active == 8 and cleaned.lower() == CHALLENGE_8_CODE.lower():
+    if active == 7 and cleaned.lower() == CHALLENGE_8_CODE.lower():
+        await mark_complete(ctx.author, 7, ctx.channel)
+    elif active == 8 and cleaned.lower() == CHALLENGE_9_CODE.lower():
         await mark_complete(ctx.author, 8, ctx.channel)
-    elif active == 9 and cleaned.lower() == CHALLENGE_9_CODE.lower():
-        await mark_complete(ctx.author, 9, ctx.channel)
     else:
         await ctx.send("❌ Invalid passkey code or challenge not active!")
 
